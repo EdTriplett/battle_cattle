@@ -1,0 +1,39 @@
+My proposal, as it stands now: Battle Cattle, a Pokemon-like game with a bullriding theme.  (Disclaimer: I haven't played Pokemon in a long time.)
+
+Users register and log in with Passport-Github.  I'll use middleware to ensure that only logged-in users can access any page other than the register and login, and that logged-in users can't access those.  This will use an Express server with Handlebar templating and at least some basic testing with Jasmine, to be augmented if time allows.  Users, their bulls, and riders will be stored in a Mongo db accessed through Mongoose.  Initially each user will have just one bull their ranch has produced, possibly built out to multiples if time allows.  Here's what I have in mind for schema so far:
+
+User:
+  -name: from github
+  -bull: 
+
+Mon: (riders and bulls both inherit from this via discriminator)
+  -name: user-chosen for bulls, seeded using Faker.js for riders
+  -_skill: randomly generated integer >0 & <100; not visible
+  -matches: array of full history [{}, {}...]
+  -winPercentage: calculated from matches via virtual
+  -score: averaged over all match.score s won by mon via virtual
+
+Rider: no fields except those from Mon
+
+Bull: all fields from Mon, plus
+  -user:
+  -last3Matches: array of 3 booleans, updated after each match.  If all are wins, reset to empty array and increment _skill by 1-5, to a max of 100
+
+Matches:
+  -user:
+  -bull:
+  -rider:
+  -winner: decided by bull._skill vs. rider._skill,
+  -score: 101 minus abs(bull._skill - rider._skill)
+
+
+User Flow: 
+                      put out to pasture      login
+                          |            /\    /
+                          V              \  V
+register ---> get new bull & name it ---> index ---> match
+                                            /\        |
+                                            |         V
+                                            emit results 
+
+On registering users choose their bull's name, then land at the index page which displays a leaderboard updated with sockets.  From there they can choose a rider to pit their bull against.  Clicking any rider redirects to a 'match' page with static image, and after 8 seconds redirects back to the index where the results are displayed and leaderboard updated.  If you're tired of your bull, you can click a link to 'put him out to pasture' that redirects to the page that generates a new bull with your chosen name and random _skill value.
